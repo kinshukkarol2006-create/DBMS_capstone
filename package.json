@@ -6,8 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check mongo.js && node --check scripts/seed-mongodb.js && node --check app.js",
-    "seed": "node scripts/seed-mongodb.js"
+    "check": "node --check server.js && node --check mongo.js && node --check scripts/seed-mongodb.js && node --check scripts/import-sql-seed.js && node --check app.js",
+    "seed": "node scripts/seed-mongodb.js",
+    "import:sql": "node scripts/import-sql-seed.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

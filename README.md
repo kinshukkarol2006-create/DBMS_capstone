@@ -70,6 +70,13 @@ npm run seed
 ```
 The seed command skips any collection that already contains documents.
 
+To import all data rows from the legacy `database.sql` seed into MongoDB, run:
+```sh
+npm run import:sql -- --dry-run
+npm run import:sql
+```
+The importer embeds pickup items, route stops, and recycling items in their MongoDB parent documents. It preserves SQL IDs, adds missing rows, and replaces documents with matching IDs using the SQL row data.
+
 ### 3. Install & Launch
 ```sh
 # Install dependencies
