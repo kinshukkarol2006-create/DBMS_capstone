@@ -1,7 +1,7 @@
 # Recollect — E-Waste Management & Operations System
 ### DBMS Capstone Project
 
-**Recollect** is an enterprise-grade electronic waste (e-waste) collection, recycling, and environmental impact management dashboard backed by **MySQL 8** and a **Node.js/Express** RESTful backend. 
+**Recollect** is an electronic waste (e-waste) collection, recycling, and environmental impact dashboard backed by **MongoDB** and a **Node.js/Express** REST API.
 
 Designed and engineered for a college DBMS capstone project, this application models real-world circular economy workflows aligned with **UNEP (United Nations Environment Programme)**, **EPA**, and **WEEE/RoHS** guidelines.
 
@@ -34,29 +34,11 @@ Quantifies tangible ecological benefits from diverted electronic scrap using int
 
 ---
 
-## 🗄️ Database Architecture (MySQL 8)
+## 🗄️ Database Architecture (MongoDB)
 
-The relational schema is custom-engineered in **Third Normal Form (3NF)** with strict referential integrity (`ON DELETE CASCADE`, `ON DELETE RESTRICT`), foreign keys, and SQL `CHECK` constraints.
+The API stores operational data in MongoDB collections for organizations, users, districts, device categories, pickup requests, collections, routes, recycling batches, impact goals, notifications, and ID counters. Pickup items, route stops, and recycling items are embedded in their parent documents so related operational data can be read and updated together.
 
-### Core Entities:
-1. `organizations`: Multi-tenant hierarchy (workspaces, logistics collection partners, and material refiners).
-2. `users`: Role-Based Access Control (`owner`, `manager`, `dispatcher`, `driver`, `viewer`).
-3. `districts`: Regional and municipal geographical zones.
-4. `device_categories`: Standardized classifications (Laptops, Mobile phones, Monitors, Desktops, Servers, Batteries, Appliances).
-5. `pickup_requests`: Customer and institutional pickup consignments with unique tracking codes (`EW-XXXX`).
-6. `pickup_request_items`: Line-item breakdown of quantities and weights per category.
-7. `collection_routes`: Logistics schedules and assigned fleet drivers.
-8. `route_stops`: Sequenced route stop stops linked to pickup requests.
-9. `collections`: Immutable audit trail of completed field collections with verified weights.
-10. `recycling_batches` & `recycling_batch_items`: Consigned batches refined by certified recycling partners.
-11. `impact_goals`: Target monthly/quarterly recovery goals.
-12. `notifications`: Real-time system alert feed.
-
-### Pre-Aggregated Reporting Views:
-* `pickup_request_dashboard`: Real-time aggregated pickup overview with concatenated device types and total estimated weights.
-* `daily_collection_volume`: Unified union of daily collection and recycling weights for analytics charting.
-* `monthly_device_category_totals`: Monthly breakdown of items by category for donut visualization.
-* `dashboard_monthly_metrics`: High-level monthly KPI rollups.
+The frontend continues to use the same `/api/...` endpoints and response fields. Numeric IDs are retained for pickup requests and related options; MongoDB-generated `_id` values are internal.
 
 ---
 
@@ -64,31 +46,29 @@ The relational schema is custom-engineered in **Third Normal Form (3NF)** with s
 
 ### Prerequisites
 * **Node.js**: v18.0 or newer
-* **MySQL Server**: v8.0.16 or newer
+* **MongoDB**: local MongoDB server for development, or a MongoDB Atlas cluster
 
 ### 1. Database Setup
-1. Start your local MySQL server.
-2. In MySQL Workbench or CLI, run `database.sql` (or `create_sample_database.sql` for a separate sample database).
-   ```sql
-   CREATE DATABASE recollect CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-   -- Then execute database.sql
-   ```
+For local development, start MongoDB locally. For deployment, create a MongoDB Atlas cluster, create a database user, and allow your deployment network access in Atlas. Copy the cluster connection string; replace its password placeholder and include the database name in the URI.
 
 ### 2. Environment Configuration
 Copy `.env.example` to `.env`:
 ```sh
 cp .env.example .env
 ```
-Configure your MySQL credentials in `.env`:
+Configure the connection details in `.env`:
 ```ini
 PORT=3000
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=recollect_sample
+MONGODB_URI=mongodb://127.0.0.1:27017/recollect
+MONGODB_DB=recollect
 WORKSPACE_ID=1
 ```
+
+To load the sample workspace and dashboard records into empty collections:
+```sh
+npm run seed
+```
+The seed command skips any collection that already contains documents.
 
 ### 3. Install & Launch
 ```sh
@@ -104,13 +84,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser. Verify the connection at [http://localhost:3000/api/health](http://localhost:3000/api/health).
 
+### Deploying on Vercel
+In the Vercel project settings, add `MONGODB_URI` using the MongoDB Atlas connection string and `MONGODB_DB` (for example, `recollect`). Add `WORKSPACE_ID` if you want to use a workspace other than `1`, then redeploy. Do not commit the real URI or database password to GitHub. The Vercel function uses the same serverless API and connects to MongoDB on demand.
+
 ---
 
 ## 🔌 API Endpoints
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/health` | Health check & MySQL status |
+| `GET` | `/api/health` | Health check & MongoDB status |
 | `GET` | `/api/dashboard` | Monthly KPIs & device category breakdown |
 | `GET` | `/api/impact` | Real-time carbon, toxic material & energy savings |
 | `GET` | `/api/volume?range=30D` | Time-series collection & recycling volume points |
